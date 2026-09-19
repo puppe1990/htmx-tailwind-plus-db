@@ -9,6 +9,8 @@ Mini-systems starter built with **HTMX + Tailwind + server-rendered HTML fragmen
 
 > Use this template on GitHub (**Use this template**) or clone it and run `npm run new <name>` to scaffold a new project.
 
+Agent contributors: read [AGENTS.md](./AGENTS.md) first.
+
 ## Run locally
 
 ```bash
