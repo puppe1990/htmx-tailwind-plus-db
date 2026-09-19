@@ -1,24 +1,30 @@
 # HTMX Turso Starter
 
-Mini sistema com **HTMX + Tailwind + SSR de fragmentos**, banco **Turso (libSQL)** e deploy no **Netlify**.
+Mini-systems starter built with **HTMX + Tailwind + server-rendered HTML fragments**, **Turso (libSQL)** for persistence, and **Netlify** for deploy.
 
-> Use como template no GitHub (**Use this template**) ou clone e rode `npm run new <nome>` para gerar um projeto novo.
+- List with search, status filter and pagination (10 per page).
+- Each item has `status`, `note` and `owner` persisted in the database (auto-save on change).
+- The table turns into cards on mobile.
+- Single-password login (signed `HttpOnly` cookie).
 
-- Lista com busca, filtro por status e paginação (10/página).
-- Cada item tem `status`, `nota` e `responsável` persistidos no banco (auto-save ao mudar).
-- Tabela vira cards no mobile.
-- Login por senha única (cookie `HttpOnly` assinado).
+> Use this template on GitHub (**Use this template**) or clone it and run `npm run new <name>` to scaffold a new project.
 
-## Rodar local
+## Run locally
 
 ```bash
 npm install
-npm run dev        # http://localhost:4173  (senha: demo1234)
-npm run seed       # popula a partir de src/data/items.json
-npm run ci         # format + lint + testes
+npm run dev        # http://localhost:4173  (password: demo1234)
+npm run seed       # seeds from src/data/items.json
+npm run ci         # format + lint + tests
 ```
 
-Local usa SQLite em arquivo (`src/data/items.db`). Em produção usa Turso via env vars.
+Locally it uses a SQLite file (`src/data/items.db`). In production it uses Turso via env vars.
+
+## Scaffold a new project
+
+```bash
+npm run new my-system        # creates ../my-system with package name and title renamed
+```
 
 ## Deploy (Netlify + Turso)
 
@@ -29,32 +35,32 @@ turso db tokens create htmx-turso-starter       # -> TURSO_AUTH_TOKEN
 
 TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... npm run seed
 
-netlify link                          # vincula o diretório ao projeto
+netlify link                          # link this directory to a Netlify project
 netlify env:set TURSO_DATABASE_URL "..."
 netlify env:set TURSO_AUTH_TOKEN "..."
-netlify env:set APP_PASSWORD "uma-senha-forte"
+netlify env:set APP_PASSWORD "a-strong-password"
 netlify env:set SESSION_SECRET "$(openssl rand -hex 32)"
 
-npm run deploy                        # desliga o selo do Netlify e publica
+npm run deploy                        # turns off the Netlify badge and ships to production
 ```
 
-## Estrutura
+## Structure
 
 ```
-src/render.mjs   SSR: funções puras que devolvem HTML (linhas, fragmento, login)
-src/db.mjs       repositório (Turso/libSQL): list/get/update/seed
-src/auth.mjs     senha + sessão assinada + cookies
-src/api.mjs      createApi({ db, secret, password }) -> fragmentos
-src/server.mjs   adaptador Node para desenvolvimento
-netlify/functions/api.mjs   adaptador de produção (mesma createApi)
-public/index.html           página (HTMX + Tailwind)
+src/render.mjs   SSR: pure functions that return HTML (rows, fragment, login)
+src/db.mjs       repository (Turso/libSQL): list/get/update/seed
+src/auth.mjs     password + signed session + cookies
+src/api.mjs      createApi({ db, secret, password }) -> HTML fragments
+src/server.mjs   Node adapter for local development
+netlify/functions/api.mjs   production adapter (same createApi)
+public/index.html           page (HTMX + Tailwind)
 src/data/items.json         seed
 ```
 
-## Armadilhas já resolvidas (não re-quebre)
+## Gotchas already handled (don't break these)
 
-- O HTMX parseia a resposta num `<template>`: `<tr>` solto é descartado. Por isso o fragmento devolve a `<table id="items-table">` inteira e o form troca `#items-panel` com `outerHTML`.
-- `hx-trigger` em elemento que não é input é `click`: o select/inputs sempre declaram `hx-trigger="change"`.
-- Escapar **todo** conteúdo de usuário com `escapeHtml` (anti-XSS no SSR).
-- Serverless: `@libsql/client/web` para `libsql://`; o client nativo só em `file:` (senão quebra na function Linux).
-- Respostas autenticadas com `Cache-Control: no-store`; cookie `Secure` em produção.
+- HTMX parses the response inside a `<template>`, so a bare `<tr>` gets dropped. That's why the fragment returns the whole `<table id="items-table">` and the form swaps `#items-panel` with `outerHTML`.
+- `hx-trigger` on a non-input element defaults to `click`: the select/inputs always declare `hx-trigger="change"`.
+- Escape **all** user content with `escapeHtml` (XSS protection in SSR).
+- Serverless: use `@libsql/client/web` for `libsql://`; the native client only for `file:` (otherwise the Linux function crashes).
+- Authenticated responses use `Cache-Control: no-store`; the cookie is `Secure` in production.
