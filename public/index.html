@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HTMX Turso Starter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+      input[type="search"]::-webkit-search-cancel-button {
+        cursor: pointer;
+      }
+
+      @media (max-width: 767px) {
+        #items-panel .items-scroll {
+          overflow: visible;
+          border: 0;
+          border-radius: 0;
+          background: transparent;
+          box-shadow: none;
+        }
+        #items-table,
+        #items-table tbody,
+        #items-table tr,
+        #items-table td {
+          display: block;
+          width: 100%;
+        }
+        #items-table thead {
+          display: none;
+        }
+        #items-table tr {
+          margin-bottom: 0.75rem;
+          padding: 0.35rem 0.25rem;
+          border: 1px solid #e2e8f0;
+          border-radius: 0.75rem;
+          background: #fff;
+          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        }
+        #items-table td {
+          border: 0;
+        }
+        #items-table td[data-label]::before {
+          content: attr(data-label);
+          display: block;
+          margin-bottom: 0.1rem;
+          font-size: 0.625rem;
+          font-weight: 600;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+          color: #94a3b8;
+        }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-800">
+    <div
+      id="login-overlay"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-50"
+    >
+      <form
+        action="/api/login"
+        method="post"
+        class="mx-4 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm"
+      >
+        <p
+          class="text-xs font-semibold uppercase tracking-widest text-slate-500"
+        >
+          HTMX Turso Starter
+        </p>
+        <h1 class="mt-1 text-xl font-bold text-slate-900">Acesso restrito</h1>
+        <p class="mt-1 text-sm text-slate-500">
+          Digite a senha da equipe para continuar.
+        </p>
+        <input
+          type="password"
+          name="password"
+          required
+          placeholder="Senha"
+          class="mt-6 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+        />
+        <button
+          type="submit"
+          class="mt-4 w-full rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+        >
+          Entrar
+        </button>
+      </form>
+    </div>
+
+    <header class="border-b border-slate-200 bg-white">
+      <div class="mx-auto max-w-[90rem] px-4 py-6 sm:px-6">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p
+              class="text-xs font-semibold uppercase tracking-widest text-slate-500"
+            >
+              HTMX Turso Starter
+            </p>
+            <h1 class="mt-1 text-2xl font-bold text-slate-900">Itens</h1>
+            <p class="mt-1 text-sm text-slate-500">
+              Status, nota e responsável ficam salvos no banco.
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span
+              id="item-count"
+              class="rounded-full bg-slate-900 px-3 py-1 text-sm font-semibold text-white"
+              >—</span
+            >
+            <a
+              href="/logout"
+              class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm hover:text-slate-900"
+              >Sair</a
+            >
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-[90rem] px-4 py-6 sm:px-6">
+      <form
+        id="filters"
+        class="mb-4 flex flex-wrap items-center gap-3"
+        hx-get="/api/items"
+        hx-target="#items-panel"
+        hx-swap="outerHTML"
+        hx-indicator="#spinner"
+        hx-trigger="input changed delay:250ms from:#search, search from:#search, change"
+      >
+        <input
+          id="search"
+          name="q"
+          type="search"
+          placeholder="Buscar por título, descrição ou responsável…"
+          autocomplete="off"
+          class="w-full flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100 sm:min-w-[240px]"
+        />
+        <select
+          id="status"
+          name="status"
+          class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100 sm:w-auto"
+        >
+          <option value="todos">Todos os status</option>
+          <option value="novo">Novo</option>
+          <option value="ativo">Ativo</option>
+          <option value="concluido">Concluído</option>
+          <option value="arquivado">Arquivado</option>
+        </select>
+        <button
+          type="reset"
+          class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm hover:text-slate-900 sm:w-auto"
+        >
+          Limpar
+        </button>
+        <span id="spinner" class="htmx-indicator text-sm text-slate-400"
+          >carregando…</span
+        >
+      </form>
+
+      <div id="items-panel"></div>
+    </main>
+
+    <div
+      id="toast"
+      class="pointer-events-none fixed bottom-4 left-1/2 z-50 max-w-[90vw] -translate-x-1/2 rounded-full bg-slate-900 px-4 py-2 text-center text-sm font-medium text-white opacity-0 shadow-lg transition-opacity duration-200"
+    ></div>
+
+    <script>
+      function boot() {
+        fetch("/api/me")
+          .then((response) => response.json())
+          .then(({ authenticated }) => {
+            if (!authenticated) {
+              const overlay = document.getElementById("login-overlay");
+              overlay.classList.remove("hidden");
+              overlay.classList.add("flex");
+              overlay.querySelector("input")?.focus();
+              return;
+            }
+            htmx.trigger("#filters", "change");
+          })
+          .catch(() => {});
+      }
+
+      function flash(button, label) {
+        const original = button.textContent;
+        button.textContent = label;
+        setTimeout(() => {
+          button.textContent = original;
+        }, 1200);
+      }
+
+      async function copyText(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch {
+          const area = document.createElement("textarea");
+          area.value = text;
+          area.setAttribute("readonly", "");
+          area.style.position = "fixed";
+          area.style.opacity = "0";
+          document.body.appendChild(area);
+          area.select();
+          const copied = document.execCommand("copy");
+          area.remove();
+          return copied;
+        }
+      }
+
+      let toastTimer;
+      function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.remove("opacity-0");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.add("opacity-0"), 3000);
+      }
+
+      document.body.addEventListener("click", async (event) => {
+        const copyButton = event.target.closest("[data-action='copy']");
+        if (!copyButton) return;
+        const message =
+          copyButton.dataset.message ||
+          copyButton.closest("tr").querySelector(".body p")?.textContent ||
+          "";
+        const copied = await copyText(message);
+        flash(copyButton, copied ? "Copiado!" : "Falhou");
+        if (copied) showToast("Copiado para a área de transferência.");
+      });
+
+      document.getElementById("filters").addEventListener("reset", () => {
+        setTimeout(() => htmx.trigger("#filters", "change"), 0);
+      });
+
+      document.addEventListener("DOMContentLoaded", boot);
+    </script>
+  </body>
+</html>

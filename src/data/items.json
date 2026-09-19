@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "id": "exemplo-1",
+      "title": "Primeiro item",
+      "body": "Descrição de exemplo. Troque este arquivo pelo seu seed real.",
+      "status": "novo",
+      "owner": "",
+      "note": ""
+    },
+    {
+      "id": "exemplo-2",
+      "title": "Segundo item",
+      "body": "O seed é idempotente: rodar de novo não duplica e preserva status/nota/responsável.",
+      "status": "ativo",
+      "owner": "",
+      "note": ""
+    }
+  ]
+}
