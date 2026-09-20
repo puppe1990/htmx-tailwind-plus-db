@@ -74,4 +74,12 @@ describe("renderLogin", () => {
     expect(renderLogin()).toContain('action="/api/login"');
     expect(renderLogin({ error: true })).toContain("Senha incorreta");
   });
+
+  it("renders a show/hide password toggle", () => {
+    const html = renderLogin();
+    expect(html).toContain('data-toggle="password"');
+    expect(html).toContain('aria-label="Mostrar senha"');
+    expect(html).toContain("data-eye-off");
+    expect(html).toContain('type === "password"');
+  });
 });
