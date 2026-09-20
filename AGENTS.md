@@ -10,6 +10,7 @@ npm install          # also installs husky hooks (prepare)
 npm run dev          # http://localhost:4173  (password: demo1234)
 npm run new <name>   # scaffold a sibling project, renamed
 npm run update       # pull infra files from upstream starter (--write to apply)
+npm run doctor       # check Node, secrets, DB reachability and CSS build
 npm run ci           # format:check + lint + test  <-- run before done
 npm run test:e2e     # Playwright HTMX flow (own DB + port); chromium needed
 npm run build:css    # prebuild Tailwind into public/styles.css
@@ -33,6 +34,7 @@ netlify/functions/api.mjs   production adapter (same createApi)
 public/index.html           client page
 src/data/items.json         seed data
 src/styles/input.css        Tailwind entry for build:css
+bin/cli.mjs      minimal CLI: new / update / doctor (npm scripts wrap it)
 tests/*.test.js  mirror of src/*
 e2e/*.spec.js    Playwright HTMX flows (playwright.config.js)
 ```
