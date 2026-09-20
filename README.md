@@ -35,6 +35,26 @@ Locally it uses a SQLite file (`src/data/items.db`). In production it uses Turso
 npm run new my-system        # creates ../my-system with package name and title renamed
 ```
 
+## Updating a derived project
+
+The starter is not a dependency, so updates are explicit. From the derived repo:
+
+```bash
+npm run update             # dry-run: fetch upstream, list changed infra files, show diff
+npm run update -- --write  # apply them (left staged)
+npm install && npm run ci  # then verify
+```
+
+Only project-agnostic files are touched — config, adapters and scripts, listed in
+`TOOLING_FILES` (`scripts/update.mjs`). Domain code (`src/render.mjs`,
+`src/api.mjs`, `src/db.mjs`, `src/auth.mjs`), `README.md`, `AGENTS.md` and
+`package.json` are **never** overwritten: read the upstream diff yourself.
+For `src/db.mjs`, copy new `MIGRATIONS` entries (the runner applies them on boot;
+never rewrite an entry already shipped). Use `--repo=<url>` to update from a fork.
+
+If the derived project shares history with the starter (cloned or `npm run new`),
+you can instead `git fetch` it and `git cherry-pick` / `git merge` the commits.
+
 ## Deploy (Netlify + Turso)
 
 ```bash

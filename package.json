@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node --env-file-if-exists=.env src/server.mjs",
     "new": "node scripts/new.mjs",
+    "update": "node scripts/update.mjs",
     "seed": "node scripts/seed.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
