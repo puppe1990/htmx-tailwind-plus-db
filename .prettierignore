@@ -2,3 +2,6 @@ node_modules
 package-lock.json
 src/data/*.db
 src/data/*.db-*
+public/styles.css
+test-results
+playwright-report

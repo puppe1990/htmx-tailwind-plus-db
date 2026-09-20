@@ -23,6 +23,21 @@ const STATUS_TEXT = {
   arquivado: "text-slate-400",
 };
 
+// Production ships a prebuilt public/styles.css (`npm run build:css`, wired in
+// netlify.toml). In dev there is no build, so the local stylesheet 404s and the
+// error handler falls back to the Play CDN -- keeping the starter build-free by
+// default while removing the CDN from production.
+const TAILWIND = `<link rel="stylesheet" href="/styles.css" />
+    <script>
+      document
+        .querySelector('link[href="/styles.css"]')
+        .addEventListener("error", () => {
+          const cdn = document.createElement("script");
+          cdn.src = "https://cdn.tailwindcss.com";
+          document.head.appendChild(cdn);
+        });
+    </script>`;
+
 export function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -160,6 +175,37 @@ ${rows}
 </div>`;
 }
 
+const EYE_ICON = `<svg data-eye viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="h-5 w-5"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" stroke-linecap="round" stroke-linejoin="round" /><circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
+
+const EYE_OFF_ICON = `<svg data-eye-off viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" class="hidden h-5 w-5"><path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.8A9.3 9.3 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3.1 4M6.3 6.3A17 17 0 0 0 2.5 12s3.5 6.5 9.5 6.5a9 9 0 0 0 4.2-1" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
+
+// Shared by the SSR login page and mirrored in public/index.html: the button
+// flips the adjacent input between password/text and swaps the eye icons.
+function passwordField({ autofocus = false } = {}) {
+  const focus = autofocus ? " autofocus" : "";
+  return `<div class="relative mt-6">
+        <input type="password" name="password" required${focus} placeholder="Senha" class="w-full rounded-lg border border-slate-200 px-3 py-2 pr-10 text-sm shadow-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+        <button type="button" data-toggle="password" aria-label="Mostrar senha" aria-pressed="false" class="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 hover:text-slate-600">
+          ${EYE_ICON}
+          ${EYE_OFF_ICON}
+        </button>
+      </div>`;
+}
+
+const PASSWORD_TOGGLE_SCRIPT = `<script>
+    document.addEventListener("click", (event) => {
+      const toggle = event.target.closest("[data-toggle='password']");
+      if (!toggle) return;
+      const input = toggle.parentElement.querySelector("input");
+      const reveal = input.type === "password";
+      input.type = reveal ? "text" : "password";
+      toggle.setAttribute("aria-pressed", String(reveal));
+      toggle.setAttribute("aria-label", reveal ? "Ocultar senha" : "Mostrar senha");
+      toggle.querySelector("[data-eye]").classList.toggle("hidden", reveal);
+      toggle.querySelector("[data-eye-off]").classList.toggle("hidden", !reveal);
+    });
+  </script>`;
+
 export function renderLogin({ error = false } = {}) {
   return `<!doctype html>
 <html lang="pt-BR">
@@ -167,7 +213,7 @@ export function renderLogin({ error = false } = {}) {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Entrar · HTMX Turso Starter</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    ${TAILWIND}
   </head>
   <body class="flex min-h-screen items-center justify-center bg-slate-50 text-slate-800">
     <form action="/api/login" method="post" class="mx-4 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -179,9 +225,10 @@ export function renderLogin({ error = false } = {}) {
           ? '<p class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">Senha incorreta. Tente de novo.</p>'
           : ""
       }
-      <input type="password" name="password" required autofocus placeholder="Senha" class="mt-6 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+      ${passwordField({ autofocus: true })}
       <button type="submit" class="mt-4 w-full rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700">Entrar</button>
     </form>
+    ${PASSWORD_TOGGLE_SCRIPT}
   </body>
 </html>`;
 }
