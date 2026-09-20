@@ -44,6 +44,20 @@ The database is [libSQL](https://github.com/tursodatabase/libsql), which is SQLi
 npm run new my-system        # creates ../my-system with package name and title renamed
 ```
 
+## CLI
+
+A small CLI dispatches the project-agnostic tasks:
+
+```bash
+node bin/cli.mjs doctor        # Node version, secrets, DB reachability, CSS build
+node bin/cli.mjs new my-system # scaffold a project
+node bin/cli.mjs update --write
+```
+
+`npm run doctor` / `npm run new` / `npm run update` are thin wrappers around it,
+so `npx htmx-tailwind-plus-db <cmd>` works once the package is installed as a
+dependency (the repo itself is private).
+
 ## Updating a derived project
 
 The starter is not a dependency, so updates are explicit. From the derived repo:

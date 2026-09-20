@@ -17,10 +17,12 @@ export const TOOLING_FILES = [
   ".github/workflows/ci.yml",
   ".prettierignore",
   ".prettierrc.json",
+  "bin/cli.mjs",
   "eslint.config.js",
   "netlify/functions/api.mjs",
   "playwright.config.js",
   "scripts/disable-badge.mjs",
+  "scripts/doctor.mjs",
   "scripts/update.mjs",
   "src/static.mjs",
   "src/styles/input.css",
@@ -71,8 +73,8 @@ staged. Nunca toca em src/render.mjs, src/api.mjs, src/db.mjs, src/auth.mjs,
 README.md, AGENTS.md, package.json nem no conteúdo do app.`);
 }
 
-function main() {
-  const { write, repo, help } = parseArgs(process.argv.slice(2));
+export function runUpdate(argv = process.argv.slice(2)) {
+  const { write, repo, help } = parseArgs(argv);
   if (help) return printHelp();
 
   const fetched = git(["fetch", "--quiet", repo, "main"]);
@@ -125,5 +127,5 @@ if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
-  main();
+  runUpdate();
 }
