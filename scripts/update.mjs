@@ -2,8 +2,12 @@ import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
-export const DEFAULT_REPO =
-  "https://github.com/puppe1990/htmx-turso-starter.git";
+const STARTER_OWNER = "puppe1990";
+// Built from parts on purpose: `npm run new` replaces the literal starter slug
+// in every text file, which would otherwise rewrite this upstream reference in
+// the generated project and point `npm run update` at a non-existent repo.
+const STARTER_SLUG = ["htmx", "turso", "starter"].join("-");
+export const DEFAULT_REPO = `https://github.com/${STARTER_OWNER}/${STARTER_SLUG}.git`;
 
 // Project-agnostic files only. Domain code (render/api/db/auth), docs and
 // package.json are intentionally excluded: overwriting them would clobber the
