@@ -9,6 +9,7 @@ Plain JavaScript ESM, no build step. Node 22+.
 npm install          # also installs husky hooks (prepare)
 npm run dev          # http://localhost:4173  (password: demo1234)
 npm run new <name>   # scaffold a sibling project, renamed
+npm run update       # pull infra files from upstream starter (--write to apply)
 npm run ci           # format:check + lint + test  <-- run before done
 npm run test:e2e     # Playwright HTMX flow (own DB + port); chromium needed
 npm run build:css    # prebuild Tailwind into public/styles.css
@@ -78,6 +79,16 @@ Adoption checklist:
 
 `npm run new <name>` already renames and ships `README.md` + `AGENTS.md`; this
 checklist is for manual adoption.
+
+## Updating a derived project
+
+`npm run update` fetches the starter and syncs only the project-agnostic files
+listed in `TOOLING_FILES` (`scripts/update.mjs`): tooling/e2e config, the Netlify
+adapter, `src/static.mjs` and helper scripts. It is a dry-run by default; `npm run
+update -- --write` applies and stages. Never let it touch domain code
+(`render.mjs`, `api.mjs`, `db.mjs`, `auth.mjs`), `README.md`, `AGENTS.md` or
+`package.json` — when upstream changes those, review the diff and port by hand.
+Add new syncable files to `TOOLING_FILES` only if they stay project-agnostic.
 
 ## Data and deploy caveats
 
