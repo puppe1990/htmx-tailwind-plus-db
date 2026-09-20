@@ -9,6 +9,10 @@ import { afterEach, describe, expect, it } from "vitest";
 const root = fileURLToPath(new URL("..", import.meta.url));
 let generated;
 
+// Built from parts so this assertion survives `npm run new`'s token rename in a
+// derived project (the literal starter slug would be rewritten there).
+const STARTER_SLUG = ["htmx", "tailwind", "plus", "db"].join("-");
+
 afterEach(() => {
   if (generated) rmSync(generated, { recursive: true, force: true });
   generated = undefined;
@@ -34,7 +38,8 @@ describe("npm run new", () => {
       pathToFileURL(join(project, "scripts/update.mjs")).href
     );
     expect(DEFAULT_REPO).toBe(
-      "https://github.com/puppe1990/htmx-turso-starter.git",
+      `https://github.com/puppe1990/${STARTER_SLUG}.git`,
     );
+    expect(DEFAULT_REPO).not.toContain("smoke-project");
   });
 });
