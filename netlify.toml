@@ -4,3 +4,20 @@
 
 [functions]
   node_bundler = "esbuild"
+
+# SSR at the root: the function only sees paths listed in its config.path
+# (netlify/functions/api.mjs). Add one redirect per server-rendered route and
+# keep the list explicit -- a wildcard `from = "/*"` without `force` shadows the
+# static assets in `public/`, causing silent 404s. Uncomment and adjust as needed.
+# [[redirects]]
+#   from = "/"
+#   to = "/.netlify/functions/api"
+#   status = 200
+# [[redirects]]
+#   from = "/signin"
+#   to = "/.netlify/functions/api"
+#   status = 200
+# [[redirects]]
+#   from = "/signup"
+#   to = "/.netlify/functions/api"
+#   status = 200
