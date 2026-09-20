@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "htmx-tailwind-plus-db": "./bin/cli.mjs"
+  },
   "scripts": {
     "dev": "node --env-file-if-exists=.env src/server.mjs",
-    "new": "node scripts/new.mjs",
-    "update": "node scripts/update.mjs",
+    "new": "node bin/cli.mjs new",
+    "update": "node bin/cli.mjs update",
+    "doctor": "node bin/cli.mjs doctor",
     "seed": "node scripts/seed.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
