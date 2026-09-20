@@ -5,8 +5,10 @@ import { fileURLToPath } from "node:url";
 import { createApi } from "./api.mjs";
 import { parseCookies } from "./auth.mjs";
 import { openDb } from "./db.mjs";
+import { readStatic } from "./static.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
+const publicDir = join(here, "../public");
 const port = Number(process.env.PORT ?? 4173);
 
 const db = await openDb({});
@@ -38,7 +40,16 @@ const server = createServer(async (req, res) => {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",
     });
-    return res.end(readFileSync(join(here, "../public/index.html"), "utf8"));
+    return res.end(readFileSync(join(publicDir, "index.html"), "utf8"));
+  }
+
+  const asset = readStatic(url.pathname, {
+    root: publicDir,
+    readFile: (filePath) => readFileSync(filePath),
+  });
+  if (asset) {
+    res.writeHead(asset.status, asset.headers);
+    return res.end(asset.body);
   }
 
   const result = await api({
