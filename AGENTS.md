@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Mini-systems starter: HTMX + Tailwind + server-rendered HTML fragments, Turso (libSQL), Netlify.
+Mini-systems starter: HTMX + Tailwind + server-rendered HTML fragments, SQLite (libSQL; Turso optional), Netlify.
 Plain JavaScript ESM, no build step. Node 22+.
 
 ## Commands
@@ -24,7 +24,7 @@ Pre-commit runs `lint-staged` (eslint --fix + prettier) then `npm test`.
 
 ```
 src/render.mjs   SSR only: pure functions returning HTML strings
-src/db.mjs       persistence only: list/get/update/seed + users (Turso/libSQL)
+src/db.mjs       persistence only: list/get/update/seed + users (SQLite/libSQL)
 src/auth.mjs     password, scrypt hashing, signed session, cookies
 src/static.mjs   content-type map + path-traversal guard for public/
 src/api.mjs      routes: createApi({ db, secret, password }) -> fragments
@@ -92,7 +92,7 @@ Add new syncable files to `TOOLING_FILES` only if they stay project-agnostic.
 
 ## Data and deploy caveats
 
-- Local DB is a `file:` SQLite at `src/data/items.db` (gitignored). Prod uses `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN`.
+- DB is SQLite by default (`file:src/data/items.db`, gitignored); set `DATABASE_URL` to a `libsql://` URL for Turso (managed) or any SQLite path. `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` remain legacy aliases. `resolveDatabaseUrl` / `resolveAuthToken` in `db.mjs` define precedence.
 - Serverless must use `@libsql/client/web` for `libsql://` (the native client only for `file:`), or the Linux function crashes. See `pickClientModule` in `db.mjs`.
 - Seed is idempotent and preserves `status`/`note`/`owner` on re-run.
 - Schema changes: append a `{ name, statements }` entry to `MIGRATIONS` in `db.mjs`; never edit a shipped entry. `runMigrations` records them in `_migrations` and is idempotent, so old databases get the change on boot.

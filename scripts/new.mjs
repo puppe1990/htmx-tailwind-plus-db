@@ -12,8 +12,8 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..");
 
-const REPO_NAME = "htmx-turso-starter";
-const REPO_TITLE = "HTMX Turso Starter";
+const REPO_NAME = "htmx-tailwind-plus-db";
+const REPO_TITLE = "HTMX Tailwind Plus DB";
 const SKIP_DIRS = new Set([".git", "node_modules", ".netlify"]);
 const TEXT_EXTENSIONS = new Set([
   ".json",

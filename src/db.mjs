@@ -4,8 +4,17 @@ import { fileURLToPath } from "node:url";
 import { PAGE_SIZE, STATUSES } from "./render.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const DEFAULT_URL =
-  process.env.TURSO_DATABASE_URL ?? `file:${join(here, "data/items.db")}`;
+const LOCAL_SQLITE_URL = `file:${join(here, "data/items.db")}`;
+
+// SQLite by default (a local `file:` database). Point DATABASE_URL at a
+// `libsql://` URL for Turso. The TURSO_* names keep older deployments working.
+export function resolveDatabaseUrl(env = process.env) {
+  return env.DATABASE_URL ?? env.TURSO_DATABASE_URL ?? LOCAL_SQLITE_URL;
+}
+
+export function resolveAuthToken(env = process.env) {
+  return env.DATABASE_AUTH_TOKEN ?? env.TURSO_AUTH_TOKEN;
+}
 
 export function pickClientModule(databaseUrl) {
   return String(databaseUrl).startsWith("file:") ? "node" : "web";
@@ -104,8 +113,8 @@ function rowToItem(row) {
 
 export async function openDb({ url, authToken } = {}) {
   const client = await loadClient(
-    url ?? DEFAULT_URL,
-    authToken ?? process.env.TURSO_AUTH_TOKEN,
+    url ?? resolveDatabaseUrl(),
+    authToken ?? resolveAuthToken(),
   );
 
   await runMigrations(client);

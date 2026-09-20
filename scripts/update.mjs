@@ -6,7 +6,7 @@ const STARTER_OWNER = "puppe1990";
 // Built from parts on purpose: `npm run new` replaces the literal starter slug
 // in every text file, which would otherwise rewrite this upstream reference in
 // the generated project and point `npm run update` at a non-existent repo.
-const STARTER_SLUG = ["htmx", "turso", "starter"].join("-");
+const STARTER_SLUG = ["htmx", "tailwind", "plus", "db"].join("-");
 export const DEFAULT_REPO = `https://github.com/${STARTER_OWNER}/${STARTER_SLUG}.git`;
 
 // Project-agnostic files only. Domain code (render/api/db/auth), docs and

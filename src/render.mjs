@@ -212,12 +212,12 @@ export function renderLogin({ error = false } = {}) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Entrar · HTMX Turso Starter</title>
+    <title>Entrar · HTMX Tailwind Plus DB</title>
     ${TAILWIND}
   </head>
   <body class="flex min-h-screen items-center justify-center bg-slate-50 text-slate-800">
     <form action="/api/login" method="post" class="mx-4 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-      <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">HTMX Turso Starter</p>
+      <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">HTMX Tailwind Plus DB</p>
       <h1 class="mt-1 text-xl font-bold text-slate-900">Acesso restrito</h1>
       <p class="mt-1 text-sm text-slate-500">Digite a senha da equipe para continuar.</p>
       ${
