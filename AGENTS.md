@@ -10,6 +10,8 @@ npm install          # also installs husky hooks (prepare)
 npm run dev          # http://localhost:4173  (password: demo1234)
 npm run new <name>   # scaffold a sibling project, renamed
 npm run ci           # format:check + lint + test  <-- run before done
+npm run test:e2e     # Playwright HTMX flow (own DB + port); chromium needed
+npm run build:css    # prebuild Tailwind into public/styles.css
 npm run format       # prettier --write .
 npm run seed         # upsert src/data/items.json into the DB
 npm run deploy       # badge-off + netlify deploy --prod
@@ -29,7 +31,9 @@ src/server.mjs   local Node adapter
 netlify/functions/api.mjs   production adapter (same createApi)
 public/index.html           client page
 src/data/items.json         seed data
+src/styles/input.css        Tailwind entry for build:css
 tests/*.test.js  mirror of src/*
+e2e/*.spec.js    Playwright HTMX flows (playwright.config.js)
 ```
 
 Flow: `public/index.html` (htmx) -> `api.mjs` -> `db.mjs`; `render.mjs` builds every fragment.
@@ -44,6 +48,7 @@ Flow: `public/index.html` (htmx) -> `api.mjs` -> `db.mjs`; `render.mjs` builds e
 - Inject I/O: `openDb({ url })`, `createApi({ db, ... })`. Never import a client deep inside a renderer.
 - Escape **all** user data with `escapeHtml` before it enters HTML.
 - New behavior -> new test first. Bugfix -> regression test. Tests must run headless with `npm run ci`.
+- Any `hx-*` flow (trigger, target, include, swap) -> cover in `e2e/*.spec.js`; unit tests cannot see it.
 - Format with Prettier; never argue style. Lint with ESLint flat config.
 
 ## HTMX invariants (breaking these ships a broken UI)
@@ -79,9 +84,11 @@ checklist is for manual adoption.
 - Local DB is a `file:` SQLite at `src/data/items.db` (gitignored). Prod uses `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN`.
 - Serverless must use `@libsql/client/web` for `libsql://` (the native client only for `file:`), or the Linux function crashes. See `pickClientModule` in `db.mjs`.
 - Seed is idempotent and preserves `status`/`note`/`owner` on re-run.
+- Schema changes: append a `{ name, statements }` entry to `MIGRATIONS` in `db.mjs`; never edit a shipped entry. `runMigrations` records them in `_migrations` and is idempotent, so old databases get the change on boot.
 - Authenticated responses are `Cache-Control: no-store`; the cookie is `Secure` in production.
 - Env: `APP_PASSWORD`, `SESSION_SECRET` required in production (no defaults there). Local `npm run dev` loads `.env` via `--env-file-if-exists`; `.env.example` lists every variable.
 - Optional multi-user (keep single-password as default): `hashPassword`/`verifyPassword` (scrypt) in `auth.mjs`, `db.createUser`/`findUserByEmail`, and `createSession(secret, { userId })` + `readSession`. User id must not contain dots.
+- Tailwind: pages load `/styles.css` and fall back to the Play CDN when it is missing. `npm run build:css` (Netlify build command) generates it. Keep class names literal (v4 scans `public/**` and `src/**/*.mjs`), and add new entry CSS to `src/styles/input.css`.
 
 ## Done means
 

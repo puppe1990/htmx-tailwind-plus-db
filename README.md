@@ -18,7 +18,9 @@ npm install
 cp .env.example .env   # optional: custom password/secret (dev works without it)
 npm run dev        # http://localhost:4173  (password: demo1234)
 npm run seed       # seeds from src/data/items.json
-npm run ci         # format + lint + tests
+npm run ci         # format + lint + unit tests
+npm run test:e2e   # Playwright HTMX flow (installs its own DB/port)
+npm run build:css  # optional: prebuild Tailwind CSS
 ```
 
 `npm run dev` loads `.env` automatically when present (`--env-file-if-exists`), so
@@ -51,6 +53,21 @@ netlify env:set SESSION_SECRET "$(openssl rand -hex 32)"
 npm run deploy                        # turns off the Netlify badge and ships to production
 ```
 
+## Tailwind in production (optional build)
+
+By default the pages fall back to the Tailwind **Play CDN**: zero build, but it
+prints a console warning and does JIT in the browser, so it is not meant for
+production. To ship real CSS:
+
+```bash
+npm run build:css    # writes public/styles.css (gitignored)
+```
+
+Netlify already runs this as its build command (`netlify.toml`). Pages load
+`/styles.css` first and only fall back to the CDN when it is missing, so dev
+(`npm run dev`, no build) keeps working and production serves no CDN. Tailwind v4
+scans `public/**` and `src/**/*.mjs`, so keep class names literal.
+
 ## Structure
 
 ```
@@ -63,6 +80,7 @@ src/server.mjs   Node adapter for local development
 netlify/functions/api.mjs   production adapter (same createApi)
 public/index.html           page (HTMX + Tailwind)
 src/data/items.json         seed
+src/styles/input.css        Tailwind entry for `npm run build:css`
 ```
 
 ## Optional: multiple users instead of a shared password
@@ -83,6 +101,21 @@ mode and add the user path on the side:
 The anonymous path (`createSession(secret)` / `verifySession`) is unchanged, so
 existing single-password deployments keep working.
 
+## Schema migrations
+
+`openDb` runs `runMigrations` on every start and records applied entries in a
+`_migrations` table, so an existing database (including production on Turso) is
+brought up to date without dropping data. To evolve the schema, append a new
+entry to `MIGRATIONS` in `src/db.mjs`:
+
+```js
+{ name: "0003_items_priority", statements: ["ALTER TABLE items ADD COLUMN priority TEXT DEFAULT ''"] }
+```
+
+Names are append-only: never edit a shipped entry (databases that already applied
+it will skip the change). Statement + ledger insert run in one transaction, so a
+failed migration rolls back.
+
 ## SSR at the root on Netlify
 
 The example serves `/` from the static `public/index.html`. If the root (or
@@ -93,6 +126,14 @@ The example serves `/` from the static `public/index.html`. If the root (or
 2. Add one `[[redirects]]` per route in `netlify.toml` (see the commented block
    in that file). Do **not** use `from = "/*"` without `force`, or you shadow the
    static assets in `public/`; keeping the list explicit avoids silent 404s.
+
+## End-to-end tests (HTMX)
+
+Unit tests cannot catch a broken `hx-*` attribute, so `npm run test:e2e` boots the
+real server (dedicated port + `src/data/e2e.db`) with Playwright and drives the
+main flow: login, search, edit status (persisted through the HTMX row swap),
+pagination and logout, plus the password show/hide toggle. It runs in CI in its
+own `e2e` job; install the browser locally with `npx playwright install chromium`.
 
 ## Gotchas already handled (don't break these)
 
