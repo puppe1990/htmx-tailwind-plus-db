@@ -16,6 +16,8 @@ const EXTRA_ITEMS = Array.from({ length: 12 }, (_, index) => ({
 test.beforeAll(async () => {
   const db = await openDb({ url: E2E_DB });
   await db.seed(EXTRA_ITEMS);
+  // Normalise the row we edit so a re-run on a persisted DB still fires a change.
+  await db.update("e2e-00", { status: "novo" });
   db.close();
 });
 
@@ -27,18 +29,39 @@ async function login(page) {
   await expect(page.locator("#items-table tbody tr").first()).toBeVisible();
 }
 
+// Wait for htmx to finish swapping and re-binding listeners before touching the
+// new DOM; otherwise a change fired too early is lost and no request is sent.
+async function htmxSettle(page, action) {
+  await page.evaluate(() => {
+    window.__settled = new Promise((resolve) =>
+      document.addEventListener("htmx:afterSettle", () => resolve(true), {
+        once: true,
+      }),
+    );
+  });
+  await action();
+  await page.evaluate(() => window.__settled);
+}
+
 test("login, filter, edit, paginate and logout", async ({ page }) => {
   await login(page);
 
-  await page.fill("#search", "e2e-03");
+  await htmxSettle(page, () => page.fill("#search", "e2e-03"));
   await expect(page.locator("#items-table tbody tr")).toHaveCount(1);
   await expect(page.locator('#items-table tr[data-id="e2e-03"]')).toBeVisible();
 
-  await page.click('#filters button[type="reset"]');
+  await htmxSettle(page, () => page.click('#filters button[type="reset"]'));
   await expect(page.locator("#items-table tbody tr")).toHaveCount(10);
 
   const status = page.locator('#items-table tr[data-id="e2e-00"] select');
-  await status.selectOption("concluido");
+  const saved = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/items/e2e-00") &&
+      response.request().method() === "POST",
+  );
+  await htmxSettle(page, () => status.selectOption("concluido"));
+  expect((await saved).status()).toBe(200);
+
   await page.reload();
   await expect(
     page.locator('#items-table tr[data-id="e2e-00"] select'),

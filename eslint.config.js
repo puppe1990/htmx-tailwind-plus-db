@@ -18,4 +18,14 @@ export default [
       },
     },
   },
+  {
+    // page.evaluate() callbacks run in the browser, not in Node.
+    files: ["e2e/**/*.js"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+      },
+    },
+  },
 ];
