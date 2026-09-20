@@ -98,6 +98,13 @@ for (const file of walk(target)) {
   if (next !== original) writeFileSync(file, next);
 }
 
+for (const doc of ["README.md", "AGENTS.md"]) {
+  if (!existsSync(join(target, doc))) {
+    console.error(`Documento esperado ausente no projeto gerado: ${doc}`);
+    process.exit(1);
+  }
+}
+
 console.log(`Projeto criado em ${relative(process.cwd(), target) || "."}`);
 console.log("\nPróximos passos:");
 console.log(`  cd ${relative(process.cwd(), target) || "."}`);
