@@ -3,7 +3,12 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { openDb, pickClientModule } from "../src/db.mjs";
+import {
+  openDb,
+  pickClientModule,
+  resolveAuthToken,
+  resolveDatabaseUrl,
+} from "../src/db.mjs";
 
 const ITEMS = [
   { id: "a", title: "Alfa", body: "primeiro", status: "novo" },
@@ -28,6 +33,44 @@ describe("pickClientModule", () => {
     expect(pickClientModule("file:local.db")).toBe("node");
     expect(pickClientModule("libsql://db.turso.io")).toBe("web");
     expect(pickClientModule("https://db.turso.io")).toBe("web");
+  });
+});
+
+describe("resolveDatabaseUrl", () => {
+  it("defaults to a local SQLite file when nothing is set", () => {
+    expect(resolveDatabaseUrl({})).toMatch(/^file:.*items\.db$/);
+  });
+
+  it("prefers DATABASE_URL and falls back to the legacy TURSO_DATABASE_URL", () => {
+    expect(resolveDatabaseUrl({ DATABASE_URL: "libsql://new" })).toBe(
+      "libsql://new",
+    );
+    expect(resolveDatabaseUrl({ TURSO_DATABASE_URL: "libsql://old" })).toBe(
+      "libsql://old",
+    );
+    expect(
+      resolveDatabaseUrl({
+        DATABASE_URL: "libsql://new",
+        TURSO_DATABASE_URL: "libsql://old",
+      }),
+    ).toBe("libsql://new");
+    expect(resolveDatabaseUrl({ DATABASE_URL: "file:/tmp/app.db" })).toBe(
+      "file:/tmp/app.db",
+    );
+  });
+});
+
+describe("resolveAuthToken", () => {
+  it("reads DATABASE_AUTH_TOKEN or the legacy TURSO_AUTH_TOKEN", () => {
+    expect(resolveAuthToken({ DATABASE_AUTH_TOKEN: "new" })).toBe("new");
+    expect(resolveAuthToken({ TURSO_AUTH_TOKEN: "old" })).toBe("old");
+    expect(
+      resolveAuthToken({
+        DATABASE_AUTH_TOKEN: "new",
+        TURSO_AUTH_TOKEN: "old",
+      }),
+    ).toBe("new");
+    expect(resolveAuthToken({})).toBeUndefined();
   });
 });
 

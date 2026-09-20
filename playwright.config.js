@@ -19,6 +19,6 @@ export default defineConfig({
     url: "http://localhost:4174",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-    env: { PORT: "4174", TURSO_DATABASE_URL: E2E_DB },
+    env: { PORT: "4174", DATABASE_URL: E2E_DB },
   },
 });
