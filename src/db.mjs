@@ -36,6 +36,37 @@ const USERS_SCHEMA = `CREATE TABLE IF NOT EXISTS users (
   created_at TEXT
 )`;
 
+// Ordered, append-only. Never edit an entry once shipped: a database that
+// already applied it will skip the edit. Add a new { name, statements } instead.
+// Keep `statements` using CREATE ... IF NOT EXISTS when it must also run on a
+// database created before the migration table existed.
+const MIGRATIONS = [
+  { name: "0001_items_table", statements: [SCHEMA] },
+  { name: "0002_users_table", statements: [USERS_SCHEMA] },
+];
+
+export async function runMigrations(client, migrations = MIGRATIONS) {
+  await client.execute(
+    "CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TEXT)",
+  );
+  const result = await client.execute("SELECT name FROM _migrations");
+  const applied = new Set(result.rows.map((row) => row.name));
+
+  for (const migration of migrations) {
+    if (applied.has(migration.name)) continue;
+    await client.batch(
+      [
+        ...migration.statements.map((sql) => ({ sql, args: [] })),
+        {
+          sql: "INSERT INTO _migrations (name, applied_at) VALUES (?, ?)",
+          args: [migration.name, new Date().toISOString()],
+        },
+      ],
+      "write",
+    );
+  }
+}
+
 function normalizeEmail(value) {
   return String(value ?? "")
     .trim()
@@ -77,8 +108,7 @@ export async function openDb({ url, authToken } = {}) {
     authToken ?? process.env.TURSO_AUTH_TOKEN,
   );
 
-  await client.execute(SCHEMA);
-  await client.execute(USERS_SCHEMA);
+  await runMigrations(client);
 
   async function get(id) {
     const result = await client.execute({
