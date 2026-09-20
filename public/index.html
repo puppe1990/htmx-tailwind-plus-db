@@ -4,7 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>HTMX Turso Starter</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/styles.css" />
+    <script>
+      document
+        .querySelector('link[href="/styles.css"]')
+        .addEventListener("error", () => {
+          const cdn = document.createElement("script");
+          cdn.src = "https://cdn.tailwindcss.com";
+          document.head.appendChild(cdn);
+        });
+    </script>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <style>
       input[type="search"]::-webkit-search-cancel-button {

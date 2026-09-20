@@ -3,3 +3,6 @@ node_modules
 src/data/*.db
 src/data/*.db-*
 .env
+public/styles.css
+test-results
+playwright-report

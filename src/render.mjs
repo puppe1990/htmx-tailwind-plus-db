@@ -23,6 +23,21 @@ const STATUS_TEXT = {
   arquivado: "text-slate-400",
 };
 
+// Production ships a prebuilt public/styles.css (`npm run build:css`, wired in
+// netlify.toml). In dev there is no build, so the local stylesheet 404s and the
+// error handler falls back to the Play CDN -- keeping the starter build-free by
+// default while removing the CDN from production.
+const TAILWIND = `<link rel="stylesheet" href="/styles.css" />
+    <script>
+      document
+        .querySelector('link[href="/styles.css"]')
+        .addEventListener("error", () => {
+          const cdn = document.createElement("script");
+          cdn.src = "https://cdn.tailwindcss.com";
+          document.head.appendChild(cdn);
+        });
+    </script>`;
+
 export function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -198,7 +213,7 @@ export function renderLogin({ error = false } = {}) {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Entrar · HTMX Turso Starter</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    ${TAILWIND}
   </head>
   <body class="flex min-h-screen items-center justify-center bg-slate-50 text-slate-800">
     <form action="/api/login" method="post" class="mx-4 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
