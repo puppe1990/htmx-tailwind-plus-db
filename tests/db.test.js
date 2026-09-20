@@ -99,3 +99,31 @@ describe("openDb", () => {
     expect(clamped.page).toBe(2);
   });
 });
+
+describe("users", () => {
+  it("creates a user and finds it case-insensitively", async () => {
+    const created = await db.createUser({
+      email: "Ana@Example.com",
+      passwordHash: "hash",
+    });
+    expect(created.id).toBeTruthy();
+    expect(created.email).toBe("ana@example.com");
+
+    const found = await db.findUserByEmail("ANA@example.com");
+    expect(found).toMatchObject({
+      email: "ana@example.com",
+      passwordHash: "hash",
+    });
+  });
+
+  it("rejects a duplicate email", async () => {
+    await db.createUser({ email: "a@b.com", passwordHash: "x" });
+    await expect(
+      db.createUser({ email: "A@B.com", passwordHash: "y" }),
+    ).rejects.toThrow();
+  });
+
+  it("returns null for an unknown email", async () => {
+    expect(await db.findUserByEmail("nope@x.com")).toBeNull();
+  });
+});

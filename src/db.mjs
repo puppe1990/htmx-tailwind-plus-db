@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PAGE_SIZE, STATUSES } from "./render.mjs";
@@ -28,6 +29,28 @@ const SCHEMA = `CREATE TABLE IF NOT EXISTS items (
   updated_at TEXT
 )`;
 
+const USERS_SCHEMA = `CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at TEXT
+)`;
+
+function normalizeEmail(value) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+function rowToUser(row) {
+  return {
+    id: row.id,
+    email: row.email,
+    passwordHash: row.password_hash,
+    createdAt: row.created_at ?? null,
+  };
+}
+
 function normalize(value) {
   return String(value ?? "")
     .normalize("NFD")
@@ -55,6 +78,7 @@ export async function openDb({ url, authToken } = {}) {
   );
 
   await client.execute(SCHEMA);
+  await client.execute(USERS_SCHEMA);
 
   async function get(id) {
     const result = await client.execute({
@@ -140,11 +164,30 @@ export async function openDb({ url, authToken } = {}) {
     return next;
   }
 
+  async function findUserByEmail(email) {
+    const result = await client.execute({
+      sql: "SELECT * FROM users WHERE email = ?",
+      args: [normalizeEmail(email)],
+    });
+    return result.rows[0] ? rowToUser(result.rows[0]) : null;
+  }
+
+  async function createUser({ id = randomUUID(), email, passwordHash }) {
+    const normalized = normalizeEmail(email);
+    await client.execute({
+      sql: "INSERT INTO users (id, email, password_hash, created_at) VALUES (?, ?, ?, ?)",
+      args: [id, normalized, passwordHash, new Date().toISOString()],
+    });
+    return { id, email: normalized };
+  }
+
   return {
     get,
     seed,
     list,
     update,
+    findUserByEmail,
+    createUser,
     close: () => client.close(),
   };
 }
