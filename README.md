@@ -1,6 +1,6 @@
-# HTMX Turso Starter
+# HTMX Tailwind Plus DB
 
-Mini-systems starter built with **HTMX + Tailwind + server-rendered HTML fragments**, **Turso (libSQL)** for persistence, and **Netlify** for deploy.
+Mini-systems starter built with **HTMX + Tailwind + server-rendered HTML fragments** and a **SQLite (libSQL) database by default** — Turso optional — deployed on **Netlify**.
 
 - List with search, status filter and pagination (10 per page).
 - Each item has `status`, `note` and `owner` persisted in the database (auto-save on change).
@@ -27,7 +27,16 @@ npm run build:css  # optional: prebuild Tailwind CSS
 the dev defaults (`demo1234` / `dev-secret-change-me`) only apply when a variable
 is unset. `.env.example` lists every variable the app reads.
 
-Locally it uses a SQLite file (`src/data/items.db`). In production it uses Turso via env vars.
+Locally it uses a SQLite file (`src/data/items.db`) with no setup required.
+
+## Database
+
+The database is [libSQL](https://github.com/tursodatabase/libsql), which is SQLite-compatible. Two options:
+
+- **SQLite (default, zero config)** — a local `file:src/data/items.db`. Works anywhere there is a writable disk (your machine, a container, a VM with a volume).
+- **Turso (optional)** — set `DATABASE_URL=libsql://...` and `DATABASE_AUTH_TOKEN=...` for a managed libSQL database. This is the easy path on serverless (Netlify has no persistent disk).
+
+`DATABASE_URL` / `DATABASE_AUTH_TOKEN` take precedence; `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` still work as legacy aliases. The schema is created and migrated on boot (`runMigrations`).
 
 ## Scaffold a new project
 
@@ -55,18 +64,22 @@ never rewrite an entry already shipped). Use `--repo=<url>` to update from a for
 If the derived project shares history with the starter (cloned or `npm run new`),
 you can instead `git fetch` it and `git cherry-pick` / `git merge` the commits.
 
-## Deploy (Netlify + Turso)
+## Deploy (Netlify)
+
+Serverless has no persistent disk, so Netlify needs a hosted database — Turso is
+the easiest libSQL option. (Deploying to a host with a volume? Skip this and keep
+the SQLite default by setting `DATABASE_URL=file:/data/app.db`.)
 
 ```bash
-turso db create htmx-turso-starter
-turso db show htmx-turso-starter --url          # -> TURSO_DATABASE_URL
-turso db tokens create htmx-turso-starter       # -> TURSO_AUTH_TOKEN
+turso db create htmx-tailwind-plus-db
+turso db show htmx-tailwind-plus-db --url          # -> DATABASE_URL
+turso db tokens create htmx-tailwind-plus-db       # -> DATABASE_AUTH_TOKEN
 
-TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... npm run seed
+DATABASE_URL=... DATABASE_AUTH_TOKEN=... npm run seed
 
 netlify link                          # link this directory to a Netlify project
-netlify env:set TURSO_DATABASE_URL "..."
-netlify env:set TURSO_AUTH_TOKEN "..."
+netlify env:set DATABASE_URL "..."
+netlify env:set DATABASE_AUTH_TOKEN "..."
 netlify env:set APP_PASSWORD "a-strong-password"
 netlify env:set SESSION_SECRET "$(openssl rand -hex 32)"
 
@@ -92,7 +105,7 @@ scans `public/**` and `src/**/*.mjs`, so keep class names literal.
 
 ```
 src/render.mjs   SSR: pure functions that return HTML (rows, fragment, login)
-src/db.mjs       repository (Turso/libSQL): list/get/update/seed + users
+src/db.mjs       repository (SQLite/libSQL): list/get/update/seed + users
 src/auth.mjs     password + hashing (scrypt) + signed session + cookies
 src/static.mjs   static assets from public/ (content-type + path-traversal guard)
 src/api.mjs      createApi({ db, secret, password }) -> HTML fragments
@@ -124,7 +137,8 @@ existing single-password deployments keep working.
 ## Schema migrations
 
 `openDb` runs `runMigrations` on every start and records applied entries in a
-`_migrations` table, so an existing database (including production on Turso) is
+`_migrations` table, so an existing database (including a hosted libSQL/Turso
+database) is
 brought up to date without dropping data. To evolve the schema, append a new
 entry to `MIGRATIONS` in `src/db.mjs`:
 
@@ -139,7 +153,7 @@ failed migration rolls back.
 ## SSR at the root on Netlify
 
 The example serves `/` from the static `public/index.html`. If the root (or
-`/signin`, `/signup`) must render server-side from Turso:
+`/signin`, `/signup`) must render server-side from the database:
 
 1. List every server-rendered route in the function's `config.path`:
    `export const config = { path: ["/", "/signin", "/signup", "/logout", "/api/*"] };`
